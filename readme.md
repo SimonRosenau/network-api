@@ -16,7 +16,7 @@ NetworkClient client = new ClientBuilder().host("localhost").port(3000).build();
 client.connect();
 ```
 
-Set the listener to listen to connections and packets:
+Set the listener to listen for connections and packets:
 
 ```
 server.setListener(new NetworkListener() {
