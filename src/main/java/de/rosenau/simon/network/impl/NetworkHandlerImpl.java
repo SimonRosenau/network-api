@@ -49,7 +49,7 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
         instance.onDisconnect(this);
         if (instance instanceof NetworkClientImpl) {
             NetworkClientImpl client = ((NetworkClientImpl) instance);
-            if (client.isKeepAlive()) {
+            if (client.isAutoReconnect()) {
                 EventLoop loop = ctx.channel().eventLoop();
                 loop.schedule(client::connect, 1, TimeUnit.SECONDS);
             }

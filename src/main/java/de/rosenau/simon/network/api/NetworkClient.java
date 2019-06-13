@@ -11,8 +11,8 @@ public interface NetworkClient {
 
     void connect();
     void disconnect();
-    void setKeepAlive(boolean keepAlive);
-    boolean isKeepAlive();
+    void setAutoReconnect(boolean keepAlive);
+    boolean isAutoReconnect();
     void setListener(NetworkListener listener);
 
 }

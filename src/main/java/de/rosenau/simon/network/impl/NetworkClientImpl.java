@@ -4,6 +4,7 @@ import de.rosenau.simon.network.api.NetworkClient;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 
+import java.net.ConnectException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -26,12 +27,12 @@ class NetworkClientImpl extends NetworkInstanceImpl implements NetworkClient {
     }
 
     @Override
-    public void setKeepAlive(boolean keepAlive) {
+    public void setAutoReconnect(boolean keepAlive) {
         this.keepAlive = keepAlive;
     }
 
     @Override
-    public boolean isKeepAlive() {
+    public boolean isAutoReconnect() {
         return keepAlive;
     }
 
@@ -53,13 +54,14 @@ class NetworkClientImpl extends NetworkInstanceImpl implements NetworkClient {
         bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
         ChannelFuture future = bootstrap.connect(host, port);
         future.addListener((ChannelFutureListener) channelFuture -> {
-            if (!channelFuture.isSuccess() && isKeepAlive()) {
+            if (!channelFuture.isSuccess() && isAutoReconnect()) {
                 EventLoop loop = channelFuture.channel().eventLoop();
                 loop.schedule(this::connect, 1, TimeUnit.SECONDS);
+            } else if (!channelFuture.isSuccess()) {
+                this.listener.onError(null, new ConnectException("Unable to connect to specified host"));
             }
         });
         channel = future.channel();
-        future.syncUninterruptibly();
     }
 
     @Override

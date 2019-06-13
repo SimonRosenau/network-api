@@ -18,7 +18,7 @@ public class ClientTest {
     public static void main(String[] args) {
 
         NetworkClient client = new ClientBuilder().host("localhost").port(3000).build();
-        client.setKeepAlive(true);
+        //client.setAutoReconnect(true);
         client.setListener(new NetworkListener() {
             @Override
             public void onConnect(NetworkHandler handler) {
@@ -40,16 +40,16 @@ public class ClientTest {
             @Override
             public void onDisconnect(NetworkHandler handler) {
                 System.out.println("Disconnected from server");
-                client.disconnect();
+                //client.disconnect();
             }
 
             @Override
             public void onError(NetworkHandler handler, Throwable cause) {
                 //
+                cause.printStackTrace();
             }
         });
         client.connect();
-        System.out.println("Connected");
         try {
             Thread.sleep(10 * 60 * 1000);
         } catch (InterruptedException e) {

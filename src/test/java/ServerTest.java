@@ -45,7 +45,7 @@ public class ServerTest {
             @Override
             public void onDisconnect(NetworkHandler handler) {
                 System.out.println("Client disconnected: " + handler.remoteAddress().toString());
-                server.stop();
+                //server.stop();
             }
 
             @Override
