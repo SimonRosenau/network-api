@@ -18,5 +18,6 @@ public interface NetworkClient {
     void setListener(NetworkListener listener);
     InetSocketAddress getAddress();
     boolean isConnected();
+    NetworkHandler getHandler();
 
 }

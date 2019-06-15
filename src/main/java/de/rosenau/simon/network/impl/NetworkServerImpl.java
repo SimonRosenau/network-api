@@ -45,9 +45,9 @@ class NetworkServerImpl extends NetworkInstanceImpl implements NetworkServer {
 
     @Override
     public void stop() {
-        if (channel != null) channel.close();
-        if (bossGroup != null) bossGroup.shutdownGracefully();
-        if (workerGroup != null) workerGroup.shutdownGracefully();
+        if (channel != null) channel.close().syncUninterruptibly();
+        if (bossGroup != null) bossGroup.shutdownGracefully().syncUninterruptibly();
+        if (workerGroup != null) workerGroup.shutdownGracefully().syncUninterruptibly();
     }
 
     @Override

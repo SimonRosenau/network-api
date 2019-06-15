@@ -7,6 +7,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoop;
 import io.netty.channel.SimpleChannelInboundHandler;
 
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
@@ -127,8 +128,8 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
         channel.close();
     }
 
-    public SocketAddress remoteAddress() {
-        return channel.remoteAddress();
+    public InetSocketAddress remoteAddress() {
+        return (InetSocketAddress) channel.remoteAddress();
     }
 
     public void registerIncomingPacket(int id, Class<? extends IncomingPacket> c) {

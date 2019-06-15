@@ -99,4 +99,9 @@ class NetworkClientImpl extends NetworkInstanceImpl implements NetworkClient {
         return this.handler != null;
     }
 
+    @Override
+    public NetworkHandler getHandler() {
+        return handler;
+    }
+
 }

@@ -1,5 +1,6 @@
 package de.rosenau.simon.network.api;
 
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 /**
@@ -16,7 +17,7 @@ public interface NetworkHandler {
 
     void disconnect();
 
-    SocketAddress remoteAddress();
+    InetSocketAddress remoteAddress();
 
     void registerIncomingPacket(int id, Class<? extends IncomingPacket> c);
 
