@@ -1,10 +1,12 @@
 package de.rosenau.simon.network.impl;
 
 import de.rosenau.simon.network.api.NetworkClient;
+import de.rosenau.simon.network.api.NetworkHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 
 import java.net.ConnectException;
+import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -20,6 +22,8 @@ class NetworkClientImpl extends NetworkInstanceImpl implements NetworkClient {
 
     private EventLoopGroup eventLoopGroup;
     private Channel channel;
+
+    private NetworkHandler handler;
 
     NetworkClientImpl(String host, int port) {
         this.host = host;
@@ -71,6 +75,28 @@ class NetworkClientImpl extends NetworkInstanceImpl implements NetworkClient {
             eventLoopGroup.shutdownGracefully();
             eventLoopGroup = null;
         }
+    }
+
+    @Override
+    public InetSocketAddress getAddress() {
+        return new InetSocketAddress(this.host, this.port);
+    }
+
+    @Override
+    void onConnect(NetworkHandler handler) {
+        this.handler = handler;
+        super.onConnect(handler);
+    }
+
+    @Override
+    void onDisconnect(NetworkHandler handler) {
+        super.onDisconnect(handler);
+        this.handler = null;
+    }
+
+    @Override
+    public boolean isConnected() {
+        return this.handler != null;
     }
 
 }

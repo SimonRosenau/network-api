@@ -1,5 +1,7 @@
 package de.rosenau.simon.network.api;
 
+import java.net.InetSocketAddress;
+
 /**
  * Created by IntelliJ IDEA.
  * Author: Simon Rosenau
@@ -14,5 +16,7 @@ public interface NetworkClient {
     void setAutoReconnect(boolean keepAlive);
     boolean isAutoReconnect();
     void setListener(NetworkListener listener);
+    InetSocketAddress getAddress();
+    boolean isConnected();
 
 }
