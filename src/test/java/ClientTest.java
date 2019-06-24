@@ -29,15 +29,6 @@ public class ClientTest {
             }
 
             @Override
-            public void onReceive(NetworkHandler handler, IncomingPacket incomingPacket) {
-                if (incomingPacket instanceof TestPacket) {
-                    TestPacket packet = (TestPacket) incomingPacket;
-                    System.out.println("Received: " + packet.getId() + " " + packet.getMessage() + " " + packet.getUuid() + " " + packet.getCount());
-                    handler.reply(packet, new TestPacket("Response", "This is the response", UUID.randomUUID(), packet.getCount() + 1));
-                }
-            }
-
-            @Override
             public void onDisconnect(NetworkHandler handler) {
                 System.out.println("Disconnected from server");
                 //client.disconnect();

@@ -26,11 +26,6 @@ server.setListener(new NetworkListener() {
     }
 
     @Override
-    public void onReceive(NetworkHandler handler, IncomingPacket incomingPacket) {
-        //
-    }
-
-    @Override
     public void onDisconnect(NetworkHandler handler) {
         //
     }
@@ -75,6 +70,11 @@ public class TestPacket implements IncomingPacket, OutgoingPacket {
         this.message = serializer.readString();
         this.uuid = serializer.readUUID();
         this.count = serializer.readInt();
+    }
+    
+    @Override
+    public void handle(NetworkHandler handler) {
+        // Packet was decoded and is ready to handle here
     }
 
 }

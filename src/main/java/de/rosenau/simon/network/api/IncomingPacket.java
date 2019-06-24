@@ -7,5 +7,6 @@ package de.rosenau.simon.network.api;
 public interface IncomingPacket {
 
     void decode(PacketDataSerializer serializer);
+    void handle(NetworkHandler handler);
 
 }

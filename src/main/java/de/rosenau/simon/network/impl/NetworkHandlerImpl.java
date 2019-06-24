@@ -70,7 +70,7 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
     }
 
     @Override
-    protected void messageReceived(ChannelHandlerContext channelHandlerContext, PacketDataSerializer packetDataSerializer) throws Exception {
+    protected void channelRead0(ChannelHandlerContext channelHandlerContext, PacketDataSerializer packetDataSerializer) throws Exception {
 
         if (!authenticated) {
             if (instance instanceof NetworkServerImpl) {
@@ -114,12 +114,12 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
             byte replyStatus = packetDataSerializer.readByte();
             if (replyStatus == 0) {
                 packet.decode(packetDataSerializer);
-                instance.listener.onReceive(this, packet);
+                packet.handle(this);
             } else if (replyStatus == 1) {
                 UUID uuid = packetDataSerializer.readUUID();
                 replyPackets.put(packet, uuid);
                 packet.decode(packetDataSerializer);
-                instance.listener.onReceive(this, packet);
+                packet.handle(this);
             } else if (replyStatus == 2) {
                 UUID uuid = packetDataSerializer.readUUID();
                 ResponseListener listener = responseListeners.remove(uuid);

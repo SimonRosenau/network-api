@@ -9,7 +9,6 @@ package de.rosenau.simon.network.api;
 
 public interface NetworkListener {
     void onConnect(NetworkHandler handler);
-    void onReceive(NetworkHandler handler, IncomingPacket incomingPacket);
     void onDisconnect(NetworkHandler handler);
     void onError(NetworkHandler handler, Throwable cause);
 }

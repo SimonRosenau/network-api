@@ -1,3 +1,4 @@
+import de.rosenau.simon.network.api.NetworkHandler;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,6 +39,11 @@ public class TestPacket implements IncomingPacket, OutgoingPacket {
         this.message = serializer.readString();
         this.uuid = serializer.readUUID();
         this.count = serializer.readInt();
+    }
+
+    @Override
+    public void handle(NetworkHandler handler) {
+
     }
 
 }
