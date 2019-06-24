@@ -4,6 +4,9 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import de.rosenau.simon.network.api.NetworkServer;
 
+import java.net.InetSocketAddress;
+import java.util.*;
+
 /**
  * Project created by SIM0NSTR.
  */
@@ -11,14 +14,18 @@ import de.rosenau.simon.network.api.NetworkServer;
 class NetworkServerImpl extends NetworkInstanceImpl implements NetworkServer {
 
     private int port;
+    private String key;
 
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
 
     private Channel channel;
 
-    NetworkServerImpl(int port) {
+    private Map<String, Integer> blockedIps = new HashMap<>();
+
+    NetworkServerImpl(int port, String key) {
         this.port = port;
+        this.key = key;
     }
 
     @Override
@@ -31,6 +38,12 @@ class NetworkServerImpl extends NetworkInstanceImpl implements NetworkServer {
         bootstrap.childHandler(new ChannelInitializer<Channel>() {
             @Override
             protected void initChannel(Channel channel) {
+                String hostString = ((InetSocketAddress) channel.remoteAddress()).getHostString();
+                if (blockedIps.containsKey(hostString) && blockedIps.get(hostString) > 10) {
+                    System.out.println(hostString + " was blocked due to too many false login attempts");
+                    channel.close();
+                    return;
+                }
                 channel.pipeline().addLast("decoder", new PacketDecoder());
                 channel.pipeline().addLast("encoder", new PacketEncoder());
                 channel.pipeline().addLast("handler", new NetworkHandlerImpl(NetworkServerImpl.this, channel));
@@ -53,6 +66,16 @@ class NetworkServerImpl extends NetworkInstanceImpl implements NetworkServer {
     @Override
     public int getPort() {
         return port;
+    }
+
+    @Override
+    String getKey() {
+        return key;
+    }
+
+    void addFailedLogin(String host) {
+        blockedIps.putIfAbsent(host, 0);
+        blockedIps.put(host, blockedIps.get(host) + 1);
     }
 
 }

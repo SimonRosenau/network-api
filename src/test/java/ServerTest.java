@@ -17,7 +17,7 @@ public class ServerTest {
 
     public static void main(String[] args) {
 
-        NetworkServer server = new ServerBuilder().port(3000).build();
+        NetworkServer server = new ServerBuilder().port(3000).key("ffffffff").build();
         server.setListener(new NetworkListener() {
             @Override
             public void onConnect(NetworkHandler handler) {

@@ -17,7 +17,7 @@ public class ClientTest {
 
     public static void main(String[] args) {
 
-        NetworkClient client = new ClientBuilder().host("localhost").port(3000).build();
+        NetworkClient client = new ClientBuilder().host("localhost").port(3000).key("ffffffff").build();
         //client.setAutoReconnect(true);
         client.setListener(new NetworkListener() {
             @Override

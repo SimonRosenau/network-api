@@ -17,6 +17,7 @@ class NetworkClientImpl extends NetworkInstanceImpl implements NetworkClient {
 
     private String host;
     private int port;
+    private String key;
 
     private boolean keepAlive;
 
@@ -25,9 +26,10 @@ class NetworkClientImpl extends NetworkInstanceImpl implements NetworkClient {
 
     private NetworkHandler handler;
 
-    NetworkClientImpl(String host, int port) {
+    NetworkClientImpl(String host, int port, String key) {
         this.host = host;
         this.port = port;
+        this.key = key;
     }
 
     @Override
@@ -102,6 +104,11 @@ class NetworkClientImpl extends NetworkInstanceImpl implements NetworkClient {
     @Override
     public NetworkHandler getHandler() {
         return handler;
+    }
+
+    @Override
+    String getKey() {
+        return key;
     }
 
 }

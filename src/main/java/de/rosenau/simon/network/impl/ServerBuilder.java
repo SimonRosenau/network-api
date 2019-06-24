@@ -12,14 +12,20 @@ import de.rosenau.simon.network.api.NetworkServer;
 public class ServerBuilder {
 
     private int port;
+    private String key;
 
     public ServerBuilder port(int port) {
         this.port = port;
         return this;
     }
 
+    public ServerBuilder key(String key) {
+        this.key = key;
+        return this;
+    }
+
     public NetworkServer build() {
-        return new NetworkServerImpl(port);
+        return new NetworkServerImpl(port, key);
     }
 
 }

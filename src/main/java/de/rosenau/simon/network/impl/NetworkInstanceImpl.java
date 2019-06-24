@@ -24,4 +24,6 @@ abstract class NetworkInstanceImpl {
         if (listener != null) listener.onDisconnect(handler);
     }
 
+    abstract String getKey();
+
 }

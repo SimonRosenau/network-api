@@ -13,6 +13,7 @@ public class ClientBuilder {
 
     private String host;
     private int port;
+    private String key;
 
     public ClientBuilder host(String host) {
         this.host = host;
@@ -24,8 +25,13 @@ public class ClientBuilder {
         return this;
     }
 
+    public ClientBuilder key(String key) {
+        this.key = key;
+        return this;
+    }
+
     public NetworkClient build() {
-        return new NetworkClientImpl(host, port);
+        return new NetworkClientImpl(host, port, key);
     }
 
 }
