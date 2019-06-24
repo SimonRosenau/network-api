@@ -53,8 +53,8 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
+        if (authenticated) instance.onDisconnect(this);
         authenticated = false;
-        instance.onDisconnect(this);
         if (instance instanceof NetworkClientImpl) {
             NetworkClientImpl client = ((NetworkClientImpl) instance);
             if (client.isAutoReconnect()) {
