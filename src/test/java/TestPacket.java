@@ -1,10 +1,10 @@
+import de.rosenau.simon.network.api.IncomingPacket;
 import de.rosenau.simon.network.api.NetworkHandler;
+import de.rosenau.simon.network.api.OutgoingPacket;
+import de.rosenau.simon.network.api.PacketDataSerializer;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import de.rosenau.simon.network.api.IncomingPacket;
-import de.rosenau.simon.network.api.OutgoingPacket;
-import de.rosenau.simon.network.api.PacketDataSerializer;
 
 import java.util.UUID;
 
@@ -43,7 +43,7 @@ public class TestPacket implements IncomingPacket, OutgoingPacket {
 
     @Override
     public void handle(NetworkHandler handler) {
-
+        handler.reply(this, new TestPacket("abchfa", "oasofhasdad", UUID.randomUUID(), 1000));
     }
 
 }

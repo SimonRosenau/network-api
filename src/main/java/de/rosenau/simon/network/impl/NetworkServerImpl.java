@@ -1,11 +1,15 @@
 package de.rosenau.simon.network.impl;
 
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.*;
 import de.rosenau.simon.network.api.NetworkServer;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.EventLoopGroup;
 
 import java.net.InetSocketAddress;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Project created by SIM0NSTR.
@@ -49,8 +53,6 @@ class NetworkServerImpl extends NetworkInstanceImpl implements NetworkServer {
                 channel.pipeline().addLast("handler", new NetworkHandlerImpl(NetworkServerImpl.this, channel));
             }
         });
-        bootstrap.option(ChannelOption.TCP_NODELAY, true);
-        bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
         ChannelFuture future = bootstrap.bind(port);
         channel = future.channel();
         future.syncUninterruptibly();

@@ -24,7 +24,7 @@ class PacketDecoder extends ByteToMessageDecoder {
     @Override
     protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf, List<Object> list) {
         if (byteBuf.readableBytes() == 0) return;
-        while(byteBuf.isReadable()) buffer.writeByte(byteBuf.readByte());
+        buffer.writeBytes(byteBuf.readBytes(byteBuf.readableBytes()));
         while(true) {
             PacketDataSerializer packet = readPacket();
             if (packet == null) break;
@@ -38,10 +38,8 @@ class PacketDecoder extends ByteToMessageDecoder {
         }
         if (length != 0 && buffer.readableBytes() >= length) {
             ByteBuf packet = Unpooled.buffer();
-            byte[] bytes = new byte[length];
-            buffer.readBytes(bytes);
+            packet.writeBytes(buffer.readBytes(length));
             buffer.discardReadBytes();
-            packet.writeBytes(bytes);
             length = 0;
             return new PacketDataSerializerImpl(packet);
         }

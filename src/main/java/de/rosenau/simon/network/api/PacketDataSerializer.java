@@ -1,6 +1,5 @@
 package de.rosenau.simon.network.api;
 
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 /**
@@ -44,9 +43,17 @@ public interface PacketDataSerializer {
     void writeShort(short s);
 
     String readString();
+
+    String readNullableString();
     void writeString(String s);
 
+    void writeNullableString(String s);
+
     UUID readUUID();
+
+    UUID readNullableUUID();
     void writeUUID(UUID uuid);
+
+    void writeNullableUUID(UUID uuid);
 
 }

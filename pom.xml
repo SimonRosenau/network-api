@@ -6,7 +6,7 @@
 
     <groupId>de.rosenau.simon</groupId>
     <artifactId>networkapi</artifactId>
-    <version>1.4</version>
+    <version>1.5</version>
     <packaging>jar</packaging>
 
     <name>NetworkAPI</name>
@@ -31,6 +31,23 @@
             <version>LATEST</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>LATEST</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
+
+    <distributionManagement>
+        <repository>
+            <id>trickety-repo</id>
+            <url>https://repo.trickety.net/utils</url>
+        </repository>
+        <snapshotRepository>
+            <id>trickety-repo</id>
+            <url>https://repo.trickety.net/utils</url>
+        </snapshotRepository>
+    </distributionManagement>
 
 </project>

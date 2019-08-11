@@ -6,7 +6,6 @@ import io.netty.channel.*;
 
 import javax.naming.AuthenticationException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -107,27 +106,31 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
             return;
         }
 
-        int id = packetDataSerializer.readInt();
-        if (incoming.containsKey(id)) {
-            IncomingPacket packet = incoming.get(id).newInstance();
+        try {
+            int id = packetDataSerializer.readInt();
+            if (incoming.containsKey(id)) {
+                IncomingPacket packet = incoming.get(id).newInstance();
 
-            byte replyStatus = packetDataSerializer.readByte();
-            if (replyStatus == 0) {
-                packet.decode(packetDataSerializer);
-                packet.handle(this);
-            } else if (replyStatus == 1) {
-                UUID uuid = packetDataSerializer.readUUID();
-                replyPackets.put(packet, uuid);
-                packet.decode(packetDataSerializer);
-                packet.handle(this);
-            } else if (replyStatus == 2) {
-                UUID uuid = packetDataSerializer.readUUID();
-                ResponseListener listener = responseListeners.remove(uuid);
-                if (listener != null) {
+                byte replyStatus = packetDataSerializer.readByte();
+                if (replyStatus == 0) {
                     packet.decode(packetDataSerializer);
-                    listener.onResponse(this, packet);
+                    packet.handle(this);
+                } else if (replyStatus == 1) {
+                    UUID uuid = packetDataSerializer.readUUID();
+                    replyPackets.put(packet, uuid);
+                    packet.decode(packetDataSerializer);
+                    packet.handle(this);
+                } else if (replyStatus == 2) {
+                    UUID uuid = packetDataSerializer.readUUID();
+                    ResponseListener listener = responseListeners.remove(uuid);
+                    if (listener != null) {
+                        packet.decode(packetDataSerializer);
+                        listener.onResponse(this, packet);
+                    }
                 }
             }
+        } catch (Exception e) {
+            instance.listener.onError(this, e);
         }
     }
 
