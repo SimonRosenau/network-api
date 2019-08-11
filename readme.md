@@ -109,7 +109,7 @@ To listen for a response, pass a NetworkListener Instance as a second argument:
 ```
 NetworkHandler handler = //
 OutgoingPacket packet = new ... //
-handler.sendPacket(packet, (responseHandler, responsePacket) -> {
+handler.sendPacket(packet, (responseHandler, responsePacket, throwable) -> {
     // Response received
 };
 ```
