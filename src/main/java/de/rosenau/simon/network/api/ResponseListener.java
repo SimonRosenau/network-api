@@ -9,6 +9,6 @@ package de.rosenau.simon.network.api;
 
 public interface ResponseListener {
 
-    void onResponse(NetworkHandler handler, IncomingPacket packet);
+    void onResponse(NetworkHandler handler, IncomingPacket packet, Throwable throwable);
 
 }

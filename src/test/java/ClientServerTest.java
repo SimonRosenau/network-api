@@ -28,8 +28,8 @@ public class ClientServerTest {
         NetworkServer server = new ServerBuilder().port(5555).key("Secret key").build();
         NetworkClient client = new ClientBuilder().port(5555).key("Secret key").host("localhost").build();
 
-        CompletableFuture<Void> serverReceived = new CompletableFuture<>();
-        CompletableFuture<Void> clientReceived = new CompletableFuture<>();
+        CompletableFuture<Boolean> serverReceived = new CompletableFuture<>();
+        CompletableFuture<Boolean> clientReceived = new CompletableFuture<>();
 
         server.setListener(new NetworkListener() {
             @Override
@@ -37,8 +37,8 @@ public class ClientServerTest {
                 handler.registerOutgoingPacket(1, TestPacket.class);
                 handler.registerIncomingPacket(1, TestPacket.class);
 
-                handler.sendPacket(new TestPacket("aaaa", "Test", UUID.randomUUID(), new Random().nextInt()), (handler1, packet) -> {
-                    serverReceived.complete(null);
+                handler.sendPacket(new TestPacket("aaaa", "Test", UUID.randomUUID(), new Random().nextInt()), (handler1, packet, throwable) -> {
+                    serverReceived.complete(throwable == null);
                 });
             }
 
@@ -58,8 +58,8 @@ public class ClientServerTest {
                 handler.registerOutgoingPacket(1, TestPacket.class);
                 handler.registerIncomingPacket(1, TestPacket.class);
 
-                handler.sendPacket(new TestPacket("aaaa", "Test", UUID.randomUUID(), new Random().nextInt()), (handler1, packet) -> {
-                    clientReceived.complete(null);
+                handler.sendPacket(new TestPacket("aaaa", "Test", UUID.randomUUID(), new Random().nextInt()), (handler1, packet, throwable) -> {
+                    clientReceived.complete(throwable == null);
                 });
             }
 
@@ -79,8 +79,8 @@ public class ClientServerTest {
         client.connect();
 
         try {
-            serverReceived.get(10, TimeUnit.SECONDS);
-            clientReceived.get(10, TimeUnit.SECONDS);
+            Assert.assertTrue(serverReceived.get(10, TimeUnit.SECONDS));
+            Assert.assertTrue(clientReceived.get(10, TimeUnit.SECONDS));
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             Assert.fail(e.getMessage());
         } finally {

@@ -1,6 +1,7 @@
 package de.rosenau.simon.network.impl;
 
 import de.rosenau.simon.network.api.*;
+import de.rosenau.simon.network.exception.ReceiveException;
 import de.rosenau.simon.network.exception.SendException;
 import io.netty.channel.*;
 
@@ -54,6 +55,11 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
     public void channelInactive(ChannelHandlerContext ctx) {
         if (authenticated) instance.onDisconnect(this);
         authenticated = false;
+
+        responseListeners.values().forEach(responseListener -> responseListener.onResponse(null, null, new ReceiveException("Handler disconnected")));
+        responseListeners.clear();
+        replyPackets.clear();
+
         if (instance instanceof NetworkClientImpl) {
             NetworkClientImpl client = ((NetworkClientImpl) instance);
             if (client.isAutoReconnect()) {
@@ -125,7 +131,7 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
                     ResponseListener listener = responseListeners.remove(uuid);
                     if (listener != null) {
                         packet.decode(packetDataSerializer);
-                        listener.onResponse(this, packet);
+                        listener.onResponse(this, packet, null);
                     }
                 }
             }
