@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -24,6 +25,7 @@ public class TestPacket implements IncomingPacket, OutgoingPacket {
     private String message;
     private UUID uuid;
     private int count;
+    private byte[] bytes;
 
     @Override
     public void encode(PacketDataSerializer serializer) {
@@ -31,6 +33,8 @@ public class TestPacket implements IncomingPacket, OutgoingPacket {
         serializer.writeString(message);
         serializer.writeUUID(uuid);
         serializer.writeInt(count);
+        serializer.writeInt(bytes.length);
+        serializer.writeBytes(bytes);
     }
 
     @Override
@@ -39,11 +43,14 @@ public class TestPacket implements IncomingPacket, OutgoingPacket {
         this.message = serializer.readString();
         this.uuid = serializer.readUUID();
         this.count = serializer.readInt();
+        this.bytes = serializer.readBytes(serializer.readInt());
     }
 
     @Override
     public void handle(NetworkHandler handler) {
-        handler.reply(this, new TestPacket("abchfa", "oasofhasdad", UUID.randomUUID(), 1000));
+        byte[] bytes = new byte[2048];
+        new Random().nextBytes(bytes);
+        handler.reply(this, new TestPacket("abchfa", "Test", UUID.randomUUID(), 1000, bytes));
     }
 
 }

@@ -77,66 +77,70 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, PacketDataSerializer packetDataSerializer) throws Exception {
 
-        if (!authenticated) {
-            if (instance instanceof NetworkServerImpl) {
-                boolean authentication = packetDataSerializer.readBoolean();
-                if (instance.getKey() != null && authentication) {
-                    String key = packetDataSerializer.readString();
-                    boolean authenticated = instance.getKey().equals(key);
-                    PacketDataSerializer serializer = new PacketDataSerializerImpl();
-                    serializer.writeBoolean(authenticated);
+        try {
+            if (!authenticated) {
+                if (instance instanceof NetworkServerImpl) {
+                    boolean authentication = packetDataSerializer.readBoolean();
+                    if (instance.getKey() != null && authentication) {
+                        String key = packetDataSerializer.readString();
+                        boolean authenticated = instance.getKey().equals(key);
+                        PacketDataSerializer serializer = new PacketDataSerializerImpl();
+                        serializer.writeBoolean(authenticated);
 
-                    if (!authenticated) {
-                        // Wrong key sent
-                        ((NetworkServerImpl) instance).addFailedLogin(((InetSocketAddress) channelHandlerContext.channel().remoteAddress()).getHostString());
-                        channel.writeAndFlush(serializer).addListener(ChannelFutureListener.CLOSE);
+                        if (!authenticated) {
+                            // Wrong key sent
+                            ((NetworkServerImpl) instance).addFailedLogin(((InetSocketAddress) channelHandlerContext.channel().remoteAddress()).getHostString());
+                            channel.writeAndFlush(serializer).addListener(ChannelFutureListener.CLOSE);
+                        } else {
+                            channel.writeAndFlush(serializer).addListener((ChannelFutureListener) future -> instance.onConnect(this));
+                            this.authenticated = true;
+                        }
                     } else {
+                        PacketDataSerializer serializer = new PacketDataSerializerImpl();
+                        serializer.writeBoolean(true);
                         channel.writeAndFlush(serializer).addListener((ChannelFutureListener) future -> instance.onConnect(this));
                         this.authenticated = true;
                     }
-                } else {
-                    PacketDataSerializer serializer = new PacketDataSerializerImpl();
-                    serializer.writeBoolean(true);
-                    channel.writeAndFlush(serializer).addListener((ChannelFutureListener) future -> instance.onConnect(this));
-                    this.authenticated = true;
-                }
-            } else if (instance instanceof NetworkClientImpl) {
-                boolean authenticated = packetDataSerializer.readBoolean();
-                if (authenticated) {
-                    instance.onConnect(this);
-                    this.authenticated = true;
-                } else {
-                    throw new AuthenticationException("Unable to authenticate with remote host");
-                }
-            }
-            return;
-        }
-
-        try {
-            int id = packetDataSerializer.readInt();
-            if (incoming.containsKey(id)) {
-                IncomingPacket packet = incoming.get(id).newInstance();
-
-                byte replyStatus = packetDataSerializer.readByte();
-                if (replyStatus == 0) {
-                    packet.decode(packetDataSerializer);
-                    packet.handle(this);
-                } else if (replyStatus == 1) {
-                    UUID uuid = packetDataSerializer.readUUID();
-                    replyPackets.put(packet, uuid);
-                    packet.decode(packetDataSerializer);
-                    packet.handle(this);
-                } else if (replyStatus == 2) {
-                    UUID uuid = packetDataSerializer.readUUID();
-                    ResponseListener listener = responseListeners.remove(uuid);
-                    if (listener != null) {
-                        packet.decode(packetDataSerializer);
-                        listener.onResponse(this, packet, null);
+                } else if (instance instanceof NetworkClientImpl) {
+                    boolean authenticated = packetDataSerializer.readBoolean();
+                    if (authenticated) {
+                        instance.onConnect(this);
+                        this.authenticated = true;
+                    } else {
+                        throw new AuthenticationException("Unable to authenticate with remote host");
                     }
                 }
+                return;
             }
-        } catch (Exception e) {
-            instance.listener.onError(this, e);
+
+            try {
+                int id = packetDataSerializer.readInt();
+                if (incoming.containsKey(id)) {
+                    IncomingPacket packet = incoming.get(id).newInstance();
+
+                    byte replyStatus = packetDataSerializer.readByte();
+                    if (replyStatus == 0) {
+                        packet.decode(packetDataSerializer);
+                        packet.handle(this);
+                    } else if (replyStatus == 1) {
+                        UUID uuid = packetDataSerializer.readUUID();
+                        replyPackets.put(packet, uuid);
+                        packet.decode(packetDataSerializer);
+                        packet.handle(this);
+                    } else if (replyStatus == 2) {
+                        UUID uuid = packetDataSerializer.readUUID();
+                        ResponseListener listener = responseListeners.remove(uuid);
+                        if (listener != null) {
+                            packet.decode(packetDataSerializer);
+                            listener.onResponse(this, packet, null);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                instance.listener.onError(this, e);
+            }
+        } finally {
+            ((PacketDataSerializerImpl) packetDataSerializer).release();
         }
     }
 

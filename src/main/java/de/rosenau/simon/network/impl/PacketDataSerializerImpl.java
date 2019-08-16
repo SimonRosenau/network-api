@@ -33,6 +33,10 @@ class PacketDataSerializerImpl implements PacketDataSerializer {
         return buffer.readableBytes();
     }
 
+    public boolean release() {
+        return buffer.release();
+    }
+
     @Override
     public byte readByte() {
         return buffer.readByte();

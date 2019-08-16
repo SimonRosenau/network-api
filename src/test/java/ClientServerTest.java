@@ -37,7 +37,7 @@ public class ClientServerTest {
                 handler.registerOutgoingPacket(1, TestPacket.class);
                 handler.registerIncomingPacket(1, TestPacket.class);
 
-                handler.sendPacket(new TestPacket("aaaa", "Test", UUID.randomUUID(), new Random().nextInt()), (handler1, packet, throwable) -> {
+                handler.sendPacket(new TestPacket("aaaa", "Test", UUID.randomUUID(), new Random().nextInt(), new byte[0]), (handler1, packet, throwable) -> {
                     serverReceived.complete(throwable == null);
                 });
             }
@@ -58,7 +58,7 @@ public class ClientServerTest {
                 handler.registerOutgoingPacket(1, TestPacket.class);
                 handler.registerIncomingPacket(1, TestPacket.class);
 
-                handler.sendPacket(new TestPacket("aaaa", "Test", UUID.randomUUID(), new Random().nextInt()), (handler1, packet, throwable) -> {
+                handler.sendPacket(new TestPacket("aaaa", "Test", UUID.randomUUID(), new Random().nextInt(), new byte[0]), (handler1, packet, throwable) -> {
                     clientReceived.complete(throwable == null);
                 });
             }

@@ -16,6 +16,7 @@ class PacketEncoder extends MessageToByteEncoder<PacketDataSerializer> {
         byte[] bytes = ((PacketDataSerializerImpl) packet).toByteArray();
         byteBuf.writeInt(bytes.length);
         byteBuf.writeBytes(bytes);
+        ((PacketDataSerializerImpl) packet).release();
     }
 
 }

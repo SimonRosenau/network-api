@@ -20,7 +20,8 @@ public class ByteBufTest {
         ByteBuf second = Unpooled.buffer();
 
         buffer.writeBytes(string.getBytes());
-        second.writeBytes(buffer.readBytes(buffer.readableBytes()));
+        second.ensureWritable(buffer.readableBytes());
+        buffer.readBytes(second, buffer.readableBytes());
         buffer.discardReadBytes();
 
         byte[] bytes = new byte[second.readableBytes()];
