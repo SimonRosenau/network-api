@@ -95,6 +95,12 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
                             channel.writeAndFlush(serializer).addListener((ChannelFutureListener) future -> instance.onConnect(this));
                             this.authenticated = true;
                         }
+                    } else if (instance.getKey() != null) {
+                        // No key sent
+                        PacketDataSerializer serializer = new PacketDataSerializerImpl();
+                        serializer.writeBoolean(false);
+                        ((NetworkServerImpl) instance).addFailedLogin(((InetSocketAddress) channelHandlerContext.channel().remoteAddress()).getHostString());
+                        channel.writeAndFlush(serializer).addListener(ChannelFutureListener.CLOSE);
                     } else {
                         PacketDataSerializer serializer = new PacketDataSerializerImpl();
                         serializer.writeBoolean(true);

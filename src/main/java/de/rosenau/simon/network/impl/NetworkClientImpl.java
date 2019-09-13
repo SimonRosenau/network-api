@@ -4,7 +4,6 @@ import de.rosenau.simon.network.api.NetworkClient;
 import de.rosenau.simon.network.api.NetworkHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
-import io.netty.util.ResourceLeakDetector;
 
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
@@ -46,7 +45,6 @@ class NetworkClientImpl extends NetworkInstanceImpl implements NetworkClient {
     @Override
     public void connect() {
         if (eventLoopGroup == null) eventLoopGroup = NetworkUtils.getEventLoopGroup();
-        ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.group(eventLoopGroup);
         bootstrap.channel(NetworkUtils.getChannelClass());

@@ -6,7 +6,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
-import io.netty.util.ResourceLeakDetector;
 
 import java.net.InetSocketAddress;
 import java.util.HashMap;
@@ -35,7 +34,6 @@ class NetworkServerImpl extends NetworkInstanceImpl implements NetworkServer {
 
     @Override
     public void start() {
-        ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
         bossGroup = NetworkUtils.getEventLoopGroup();
         workerGroup = NetworkUtils.getEventLoopGroup();
         ServerBootstrap bootstrap = new ServerBootstrap();
