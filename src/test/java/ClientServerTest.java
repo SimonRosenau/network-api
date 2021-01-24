@@ -7,8 +7,9 @@ import de.rosenau.simon.network.impl.ServerBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Random;
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +26,7 @@ public class ClientServerTest {
 
     @Test
     public void test() {
+
         NetworkServer server = new ServerBuilder().port(5555).key("Secret key").build();
         NetworkClient client = new ClientBuilder().port(5555).key("Secret key").host("localhost").build();
 
@@ -34,12 +36,14 @@ public class ClientServerTest {
         server.setListener(new NetworkListener() {
             @Override
             public void onConnect(NetworkHandler handler) {
-                handler.registerOutgoingPacket(1, TestPacket.class);
-                handler.registerIncomingPacket(1, TestPacket.class);
+                handler.registerIncomingRequest(1, TestRequest.class);
+                handler.registerOutgoingRequest(1, TestRequest.class, TestResponse.class);
 
-                handler.sendPacket(new TestPacket("aaaa", "Test", UUID.randomUUID(), new Random().nextInt(), new byte[0]), (handler1, packet, throwable) -> {
-                    serverReceived.complete(throwable == null);
-                });
+                new Thread(() -> {
+                    String string = "Test";
+                    TestResponse response = handler.request(new TestRequest(string));
+                    serverReceived.complete(response.getString().equals(string + string));
+                }).start();
             }
 
             @Override
@@ -55,12 +59,14 @@ public class ClientServerTest {
         client.setListener(new NetworkListener() {
             @Override
             public void onConnect(NetworkHandler handler) {
-                handler.registerOutgoingPacket(1, TestPacket.class);
-                handler.registerIncomingPacket(1, TestPacket.class);
+                handler.registerIncomingRequest(1, TestRequest.class);
+                handler.registerOutgoingRequest(1, TestRequest.class, TestResponse.class);
 
-                handler.sendPacket(new TestPacket("aaaa", "Test", UUID.randomUUID(), new Random().nextInt(), new byte[0]), (handler1, packet, throwable) -> {
-                    clientReceived.complete(throwable == null);
-                });
+                new Thread(() -> {
+                    String string = "Test";
+                    TestResponse response = handler.request(new TestRequest(string));
+                    clientReceived.complete(response.getString().equals(string + string));
+                }).start();
             }
 
             @Override

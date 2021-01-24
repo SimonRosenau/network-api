@@ -6,11 +6,15 @@ import de.rosenau.simon.network.exception.SendException;
 import io.netty.channel.*;
 
 import javax.naming.AuthenticationException;
+import java.lang.reflect.ParameterizedType;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -25,23 +29,25 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
     private final NetworkInstanceImpl instance;
     private final Channel channel;
 
-    private final HashMap<Integer, Class<? extends IncomingPacket>> incoming;
-    private final HashMap<Class<? extends OutgoingPacket>, Integer> outgoing;
+    private final HashMap<Integer, Class<? extends IncomingPacket>> incomingPackets = new HashMap<>();
+    private final HashMap<Class<? extends OutgoingPacket>, Integer> outgoingPackets = new HashMap<>();
+    private final HashMap<Integer, Class<? extends IncomingRequest<?>>> incomingRequests = new HashMap<>();
+    private final HashMap<Class<? extends OutgoingRequest<?>>, Integer> outgoingRequests = new HashMap<>();
+    private final HashMap<Class<? extends OutgoingRequest<?>>, Class<? extends IncomingResponse>> requestResponses = new HashMap<>();
 
-    private final Map<UUID, ResponseListener> responseListeners = new ConcurrentHashMap<>();
-    private final Map<IncomingPacket, UUID> replyPackets = new ConcurrentHashMap<>();
+    private final Map<UUID, ResponseListener<?>> responseListeners = new ConcurrentHashMap<>();
 
+    private Thread workerThread = null;
     private boolean authenticated = false;
 
     NetworkHandlerImpl(NetworkInstanceImpl instance, Channel channel) {
         this.instance = instance;
         this.channel = channel;
-        this.incoming = new HashMap<>();
-        this.outgoing = new HashMap<>();
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
+        workerThread = Thread.currentThread();
         authenticated = false;
         if (instance instanceof NetworkClientImpl) {
             PacketDataSerializer serializer = new PacketDataSerializerImpl();
@@ -54,11 +60,11 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
         if (authenticated) instance.onDisconnect(this);
+        workerThread = null;
         authenticated = false;
 
         responseListeners.values().forEach(responseListener -> responseListener.onResponse(null, null, new ReceiveException("Handler disconnected")));
         responseListeners.clear();
-        replyPackets.clear();
 
         if (instance instanceof NetworkClientImpl) {
             NetworkClientImpl client = ((NetworkClientImpl) instance);
@@ -75,8 +81,7 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext channelHandlerContext, PacketDataSerializer packetDataSerializer) throws Exception {
-
+    protected void channelRead0(ChannelHandlerContext channelHandlerContext, PacketDataSerializer packetDataSerializer) {
         try {
             if (!authenticated) {
                 if (instance instanceof NetworkServerImpl) {
@@ -120,68 +125,98 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
             }
 
             try {
-                int id = packetDataSerializer.readInt();
-                if (incoming.containsKey(id)) {
-                    IncomingPacket packet = incoming.get(id).getConstructor().newInstance();
+                byte type = packetDataSerializer.readByte();
 
-                    byte replyStatus = packetDataSerializer.readByte();
-                    if (replyStatus == 0) {
+                if (type == 0) {
+                    int id = packetDataSerializer.readInt();
+                    if (incomingPackets.containsKey(id)) {
+                        IncomingPacket packet = incomingPackets.get(id).getConstructor().newInstance();
                         packet.decode(packetDataSerializer);
                         packet.handle(this);
-                    } else if (replyStatus == 1) {
-                        UUID uuid = packetDataSerializer.readUUID();
-                        replyPackets.put(packet, uuid);
-                        packet.decode(packetDataSerializer);
-                        packet.handle(this);
-                    } else if (replyStatus == 2) {
-                        UUID uuid = packetDataSerializer.readUUID();
-                        ResponseListener listener = responseListeners.remove(uuid);
-                        if (listener != null) {
-                            packet.decode(packetDataSerializer);
-                            listener.onResponse(this, packet, null);
-                        }
+                    }
+                } else if (type == 1) {
+                    int id = packetDataSerializer.readInt();
+                    if (incomingRequests.containsKey(id)) {
+                        IncomingRequest<?> request = incomingRequests.get(id).getConstructor().newInstance();
+                        UUID responseKey = packetDataSerializer.readUUID();
+                        request.decode(packetDataSerializer);
+                        OutgoingResponse response = request.handle(this);
+                        respond(response, responseKey);
+                    }
+                } else if (type == 2) {
+                    UUID responseKey = packetDataSerializer.readUUID();
+                    @SuppressWarnings("unchecked")
+                    ResponseListener<IncomingResponse> listener = (ResponseListener<IncomingResponse>) responseListeners.remove(responseKey);
+                    if (listener != null) {
+                        IncomingResponse response = listener.createResponsePacket();
+                        response.decode(packetDataSerializer);
+                        listener.onResponse(this, response, null);
                     }
                 }
             } catch (Exception e) {
                 instance.listener.onError(this, e);
             }
+        } catch (Throwable e) {
+            e.printStackTrace();
         } finally {
             ((PacketDataSerializerImpl) packetDataSerializer).release();
         }
     }
 
-    public void sendPacket(OutgoingPacket packet) {
-        sendPacket(packet, null);
-    }
-
-    public void sendPacket(OutgoingPacket packet, ResponseListener listener) {
-        Integer id = outgoing.get(packet.getClass());
+    @Override
+    public void send(OutgoingPacket packet) {
+        Integer id = outgoingPackets.get(packet.getClass());
         if (id == null) throw new SendException("Packet not registered: " + packet.getClass().getName());
 
         PacketDataSerializer serializer = new PacketDataSerializerImpl();
+        serializer.writeByte((byte) 0);
         serializer.writeInt(id);
-        serializer.writeByte((byte) (listener == null ? 0 : 1));
-        if (listener != null) {
-            UUID uuid = UUID.randomUUID();
-            serializer.writeUUID(uuid);
-            responseListeners.put(uuid, listener);
-        }
         packet.encode(serializer);
         channel.writeAndFlush(serializer);
     }
 
-    public void reply(IncomingPacket incomingPacket, OutgoingPacket packet) {
-        Integer id = outgoing.get(packet.getClass());
-        if (id == null) throw new SendException("Packet not registered: " + packet.getClass().getName());
+    @Override
+    public <T extends IncomingResponse> T request(OutgoingRequest<T> request) throws RuntimeException {
+        if (workerThread != null && Thread.currentThread().getName().equals(workerThread.getName())) throw new RuntimeException("Cannot request packet in network thread");
+        Integer id = outgoingRequests.get(request.getClass());
+        if (id == null) throw new SendException("Request not registered: " + request.getClass().getName());
 
-        UUID uuid = replyPackets.remove(incomingPacket);
-        if (uuid == null) throw new SendException("Incoming packet didn't requested a response");
+        UUID responseKey = UUID.randomUUID();
 
         PacketDataSerializer serializer = new PacketDataSerializerImpl();
+        serializer.writeByte((byte) 1);
         serializer.writeInt(id);
-        serializer.writeByte((byte) 2);
-        serializer.writeUUID(uuid);
+        serializer.writeUUID(responseKey);
+        request.encode(serializer);
 
+        CompletableFuture<T> future = new CompletableFuture<>();
+        responseListeners.put(responseKey, new ResponseListener<T>() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public T createResponsePacket() throws Exception {
+                return (T) requestResponses.get(request.getClass()).getConstructor().newInstance();
+            }
+
+            @Override
+            public void onResponse(NetworkHandler handler, T response, Throwable throwable) {
+                if (response != null) future.complete(response);
+                if (throwable != null) future.completeExceptionally(throwable);
+            }
+        });
+
+        channel.writeAndFlush(serializer);
+
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException("Unable to get network response", e);
+        }
+    }
+
+    private void respond(OutgoingResponse packet, UUID responseKey) {
+        PacketDataSerializer serializer = new PacketDataSerializerImpl();
+        serializer.writeByte((byte) 2);
+        serializer.writeUUID(responseKey);
         packet.encode(serializer);
         channel.writeAndFlush(serializer);
     }
@@ -194,12 +229,30 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
         return (InetSocketAddress) channel.remoteAddress();
     }
 
+    @Override
     public void registerIncomingPacket(int id, Class<? extends IncomingPacket> c) {
-        incoming.put(id, c);
+        incomingPackets.put(id, c);
     }
 
+    @Override
     public void registerOutgoingPacket(int id, Class<? extends OutgoingPacket> c) {
-        outgoing.put(c, id);
+        outgoingPackets.put(c, id);
+    }
+
+    @Override
+    public void registerIncomingRequest(int id, Class<? extends IncomingRequest<? extends OutgoingResponse>> c) {
+        incomingRequests.put(id, c);
+    }
+
+    @Override
+    public <T extends IncomingResponse> void registerOutgoingRequest(int id, Class<? extends OutgoingRequest<T>> c, Class<T> rc) {
+        outgoingRequests.put(c, id);
+        requestResponses.put(c, rc);
+    }
+
+    private interface ResponseListener <T extends IncomingResponse> {
+        T createResponsePacket() throws Exception;
+        void onResponse(NetworkHandler handler, T packet, Throwable throwable);
     }
 
 }

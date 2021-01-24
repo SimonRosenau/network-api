@@ -67,7 +67,7 @@ You can create a packet like this:
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-public class TestPacket implements IncomingPacket, OutgoingPacket {
+public class TestResponse implements IncomingPacket, OutgoingPacket {
 
     private String id;
     private String message;

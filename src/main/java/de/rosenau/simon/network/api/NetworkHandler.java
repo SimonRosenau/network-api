@@ -9,11 +9,9 @@ import java.net.SocketAddress;
 
 public interface NetworkHandler {
 
-    void sendPacket(OutgoingPacket packet);
+    void send(OutgoingPacket packet);
 
-    void sendPacket(OutgoingPacket packet, ResponseListener listener);
-
-    void reply(IncomingPacket incomingPacket, OutgoingPacket packet);
+    <T extends IncomingResponse> T request(OutgoingRequest<T> request) throws RuntimeException;
 
     void disconnect();
 
@@ -22,5 +20,9 @@ public interface NetworkHandler {
     void registerIncomingPacket(int id, Class<? extends IncomingPacket> c);
 
     void registerOutgoingPacket(int id, Class<? extends OutgoingPacket> c);
+
+    void registerIncomingRequest(int id, Class<? extends IncomingRequest<?>> c);
+
+    <T extends IncomingResponse> void registerOutgoingRequest(int id, Class<? extends OutgoingRequest<T>> c, Class<T> rc);
 
 }
