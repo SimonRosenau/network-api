@@ -130,24 +130,18 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
                 if (type == 0) {
                     int id = packetDataSerializer.readInt();
                     if (incomingPackets.containsKey(id)) {
-                        channel.eventLoop().submit(() -> {
-                            try {
-                                IncomingPacket packet = incomingPackets.get(id).getConstructor().newInstance();
-                                packet.decode(packetDataSerializer);
-                                channel.eventLoop().submit(() -> packet.handle(this));
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        });
+                        IncomingPacket packet = incomingPackets.get(id).getConstructor().newInstance();
+                        packet.decode(packetDataSerializer);
+                        channel.eventLoop().submit(() -> packet.handle(this));
                     }
                 } else if (type == 1) {
                     int id = packetDataSerializer.readInt();
                     if (incomingRequests.containsKey(id)) {
                         IncomingRequest<?> request = incomingRequests.get(id).getConstructor().newInstance();
+                        UUID responseKey = packetDataSerializer.readUUID();
+                        request.decode(packetDataSerializer);
                         channel.eventLoop().submit(() -> {
                             try {
-                                UUID responseKey = packetDataSerializer.readUUID();
-                                request.decode(packetDataSerializer);
                                 OutgoingResponse response = request.handle(this);
                                 respond(response, responseKey);
                             } catch (Exception e) {
@@ -160,10 +154,10 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
                     @SuppressWarnings("unchecked")
                     ResponseListener<IncomingResponse> listener = (ResponseListener<IncomingResponse>) responseListeners.remove(responseKey);
                     if (listener != null) {
+                        IncomingResponse response = listener.createResponsePacket();
+                        response.decode(packetDataSerializer);
                         channel.eventLoop().submit(() -> {
                             try {
-                                IncomingResponse response = listener.createResponsePacket();
-                                response.decode(packetDataSerializer);
                                 listener.onResponse(this, response, null);
                             } catch (Exception e) {
                                 e.printStackTrace();
