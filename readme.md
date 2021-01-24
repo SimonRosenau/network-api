@@ -2,6 +2,24 @@
 
 This is a Java Networking Api for a simple packed based Server and Client.
 
+Install via maven:
+
+```
+<repository>
+  <id>github</id>
+  <name>GitHub Packages</name>
+  <url>https://maven.pkg.github.com/SimonRosenau/network-api</url>
+</repository>
+```
+
+```
+<dependency>
+  <groupId>de.rosenau.simon</groupId>
+  <artifactId>networkapi</artifactId>
+  <version>2.0.0</version>
+</dependency>
+```
+
 Initialize Server:
 
 ```

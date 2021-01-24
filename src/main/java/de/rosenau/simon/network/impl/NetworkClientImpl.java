@@ -15,9 +15,9 @@ import java.util.concurrent.TimeUnit;
 
 class NetworkClientImpl extends NetworkInstanceImpl implements NetworkClient {
 
-    private String host;
-    private int port;
-    private String key;
+    private final String host;
+    private final int port;
+    private final String key;
 
     private boolean keepAlive;
 

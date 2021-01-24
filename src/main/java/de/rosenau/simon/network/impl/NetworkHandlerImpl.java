@@ -22,14 +22,14 @@ import java.util.concurrent.TimeUnit;
 
 class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerializer> implements NetworkHandler {
 
-    private NetworkInstanceImpl instance;
-    private Channel channel;
+    private final NetworkInstanceImpl instance;
+    private final Channel channel;
 
-    private HashMap<Integer, Class<? extends IncomingPacket>> incoming;
-    private HashMap<Class<? extends OutgoingPacket>, Integer> outgoing;
+    private final HashMap<Integer, Class<? extends IncomingPacket>> incoming;
+    private final HashMap<Class<? extends OutgoingPacket>, Integer> outgoing;
 
-    private Map<UUID, ResponseListener> responseListeners = new ConcurrentHashMap<>();
-    private Map<IncomingPacket, UUID> replyPackets = new ConcurrentHashMap<>();
+    private final Map<UUID, ResponseListener> responseListeners = new ConcurrentHashMap<>();
+    private final Map<IncomingPacket, UUID> replyPackets = new ConcurrentHashMap<>();
 
     private boolean authenticated = false;
 
@@ -122,7 +122,7 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
             try {
                 int id = packetDataSerializer.readInt();
                 if (incoming.containsKey(id)) {
-                    IncomingPacket packet = incoming.get(id).newInstance();
+                    IncomingPacket packet = incoming.get(id).getConstructor().newInstance();
 
                     byte replyStatus = packetDataSerializer.readByte();
                     if (replyStatus == 0) {

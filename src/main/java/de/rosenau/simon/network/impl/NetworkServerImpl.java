@@ -17,15 +17,15 @@ import java.util.Map;
 
 class NetworkServerImpl extends NetworkInstanceImpl implements NetworkServer {
 
-    private int port;
-    private String key;
+    private final int port;
+    private final String key;
 
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
 
     private Channel channel;
 
-    private Map<String, Integer> blockedIps = new HashMap<>();
+    private final Map<String, Integer> blockedIps = new HashMap<>();
 
     NetworkServerImpl(int port, String key) {
         this.port = port;

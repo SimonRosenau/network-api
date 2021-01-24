@@ -14,7 +14,7 @@ import java.util.List;
 
 class PacketDecoder extends ByteToMessageDecoder {
 
-    private ByteBuf buffer;
+    private final ByteBuf buffer;
     private int length;
 
     PacketDecoder() {

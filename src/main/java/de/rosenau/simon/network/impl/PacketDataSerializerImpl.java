@@ -13,7 +13,7 @@ import java.util.UUID;
 
 class PacketDataSerializerImpl implements PacketDataSerializer {
 
-    private ByteBuf buffer;
+    private final ByteBuf buffer;
 
     PacketDataSerializerImpl(ByteBuf buffer) {
         this.buffer = buffer;
