@@ -139,8 +139,13 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
                         packet.decode(packetDataSerializer);
                         debug("Decoded packet: " + packet.getClass().getName());
                         channel.eventLoop().submit(() -> {
-                            packet.handle(this);
-                            debug("Handled packet: " + packet.getClass().getName());
+                            try {
+                                packet.handle(this);
+                                debug("Handled packet: " + packet.getClass().getName());
+                            } catch (Exception e) {
+                                if (instance.isDebug()) e.printStackTrace();
+                                instance.listener.onError(this, e);
+                            }
                         });
                     }
                 } else if (type == 1) {
@@ -154,7 +159,8 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
                                 OutgoingResponse response = request.handle(this);
                                 respond(response, responseKey);
                             } catch (Exception e) {
-                                e.printStackTrace();
+                                if (instance.isDebug()) e.printStackTrace();
+                                instance.listener.onError(this, e);
                             }
                         });
                     }
@@ -169,7 +175,8 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
                             try {
                                 listener.onResponse(this, response, null);
                             } catch (Exception e) {
-                                e.printStackTrace();
+                                if (instance.isDebug()) e.printStackTrace();
+                                instance.listener.onError(this, e);
                             }
                         });
                     }
