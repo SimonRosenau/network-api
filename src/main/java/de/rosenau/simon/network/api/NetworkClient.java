@@ -19,5 +19,6 @@ public interface NetworkClient {
     InetSocketAddress getAddress();
     boolean isConnected();
     NetworkHandler getHandler();
+    void debug(boolean value);
 
 }

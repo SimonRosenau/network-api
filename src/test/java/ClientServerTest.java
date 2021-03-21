@@ -30,14 +30,21 @@ public class ClientServerTest {
         NetworkServer server = new ServerBuilder().port(5555).key("Secret key").build();
         NetworkClient client = new ClientBuilder().port(5555).key("Secret key").host("localhost").build();
 
+        server.debug(true);
+        client.debug(true);
+
         CompletableFuture<Boolean> serverReceived = new CompletableFuture<>();
         CompletableFuture<Boolean> clientReceived = new CompletableFuture<>();
 
         server.setListener(new NetworkListener() {
             @Override
             public void onConnect(NetworkHandler handler) {
+                handler.registerOutgoingPacket(1, TestPacket.class);
+                handler.registerIncomingPacket(1, TestPacket.class);
                 handler.registerIncomingRequest(1, TestRequest.class);
                 handler.registerOutgoingRequest(1, TestRequest.class, TestResponse.class);
+
+                handler.send(new TestPacket());
 
                 new Thread(() -> {
                     String string = "Test";
@@ -59,8 +66,12 @@ public class ClientServerTest {
         client.setListener(new NetworkListener() {
             @Override
             public void onConnect(NetworkHandler handler) {
+                handler.registerOutgoingPacket(1, TestPacket.class);
+                handler.registerIncomingPacket(1, TestPacket.class);
                 handler.registerIncomingRequest(1, TestRequest.class);
                 handler.registerOutgoingRequest(1, TestRequest.class, TestResponse.class);
+
+                handler.send(new TestPacket());
 
                 new Thread(() -> {
                     String string = "Test";

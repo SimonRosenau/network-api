@@ -26,6 +26,8 @@ class NetworkClientImpl extends NetworkInstanceImpl implements NetworkClient {
 
     private NetworkHandler handler;
 
+    private boolean debug = false;
+
     NetworkClientImpl(String host, int port, String key) {
         this.host = host;
         this.port = port;
@@ -109,6 +111,16 @@ class NetworkClientImpl extends NetworkInstanceImpl implements NetworkClient {
     @Override
     String getKey() {
         return key;
+    }
+
+    @Override
+    public void debug(boolean value) {
+        this.debug = value;
+    }
+
+    @Override
+    public boolean isDebug() {
+        return debug;
     }
 
 }

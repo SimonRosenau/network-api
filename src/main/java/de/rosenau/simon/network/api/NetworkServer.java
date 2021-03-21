@@ -13,5 +13,6 @@ public interface NetworkServer {
     void stop();
     int getPort();
     void setListener(NetworkListener listener);
+    void debug(boolean value);
 
 }

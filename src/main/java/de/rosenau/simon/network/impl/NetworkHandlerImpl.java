@@ -6,9 +6,7 @@ import de.rosenau.simon.network.exception.SendException;
 import io.netty.channel.*;
 
 import javax.naming.AuthenticationException;
-import java.lang.reflect.ParameterizedType;
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -47,6 +45,7 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
+        debug("Channel active");
         workerThread = Thread.currentThread();
         authenticated = false;
         if (instance instanceof NetworkClientImpl) {
@@ -54,11 +53,13 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
             serializer.writeBoolean(instance.getKey() != null);
             if (instance.getKey() != null) serializer.writeString(instance.getKey());
             channel.writeAndFlush(serializer);
+            if (instance.getKey() != null) debug("Sent authorization key");
         }
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
+        debug("Channel inactive");
         if (authenticated) instance.onDisconnect(this);
         workerThread = null;
         authenticated = false;
@@ -77,6 +78,7 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+        if (instance.isDebug()) cause.printStackTrace();
         instance.listener.onError(this, cause);
     }
 
@@ -126,13 +128,20 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
 
             try {
                 byte type = packetDataSerializer.readByte();
+                debug("Received packet of type: " + type);
 
                 if (type == 0) {
                     int id = packetDataSerializer.readInt();
+                    debug("Received packet of id: " + id);
                     if (incomingPackets.containsKey(id)) {
                         IncomingPacket packet = incomingPackets.get(id).getConstructor().newInstance();
+                        debug("Received packet is of class: " + packet.getClass().getName());
                         packet.decode(packetDataSerializer);
-                        channel.eventLoop().submit(() -> packet.handle(this));
+                        debug("Decoded packet: " + packet.getClass().getName());
+                        channel.eventLoop().submit(() -> {
+                            packet.handle(this);
+                            debug("Handled packet: " + packet.getClass().getName());
+                        });
                     }
                 } else if (type == 1) {
                     int id = packetDataSerializer.readInt();
@@ -166,6 +175,7 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
                     }
                 }
             } catch (Exception e) {
+                if (instance.isDebug()) e.printStackTrace();
                 instance.listener.onError(this, e);
             }
         } catch (Throwable e) {
@@ -185,6 +195,7 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
         serializer.writeInt(id);
         packet.encode(serializer);
         channel.writeAndFlush(serializer);
+        debug("Sent packet: " + id + " - " + packet.getClass().getName());
     }
 
     @Override
@@ -265,6 +276,11 @@ class NetworkHandlerImpl extends SimpleChannelInboundHandler<PacketDataSerialize
     private interface ResponseListener <T extends IncomingResponse> {
         T createResponsePacket() throws Exception;
         void onResponse(NetworkHandler handler, T packet, Throwable throwable);
+    }
+
+    private void debug(String message) {
+        if (!instance.isDebug()) return;
+        System.out.println("[DEBUG] " + message);
     }
 
 }

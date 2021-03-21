@@ -26,4 +26,6 @@ abstract class NetworkInstanceImpl {
 
     abstract String getKey();
 
+    abstract boolean isDebug();
+
 }

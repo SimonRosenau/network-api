@@ -27,6 +27,8 @@ class NetworkServerImpl extends NetworkInstanceImpl implements NetworkServer {
 
     private final Map<String, Integer> blockedIps = new HashMap<>();
 
+    private boolean debug = false;
+
     NetworkServerImpl(int port, String key) {
         this.port = port;
         this.key = key;
@@ -78,6 +80,16 @@ class NetworkServerImpl extends NetworkInstanceImpl implements NetworkServer {
     void addFailedLogin(String host) {
         blockedIps.putIfAbsent(host, 0);
         blockedIps.put(host, blockedIps.get(host) + 1);
+    }
+
+    @Override
+    public void debug(boolean value) {
+        this.debug = value;
+    }
+
+    @Override
+    public boolean isDebug() {
+        return debug;
     }
 
 }
